@@ -1,51 +1,60 @@
 // ==UserScript==
 // @name         Jobber - Timeclock Week Total
 // @namespace    https://secure.getjobber.com/
-// @version      0.3
+// @version      1.9
 // @description  When in the week overview in the time sheet menu, this script will total your hours and insert an element that displays them on the right.
 // @author       Noah MacMurchy
 // @match        https://secure.getjobber.com/time_sheet/*/*/*/week
-// @grant        none
 // @require      http://code.jquery.com/jquery-latest.js
-// @copyright    2021+, Noah MacMurchy
+// @copyright    2022+ © Noah MacMurchy
 // ==/UserScript==
-var $ = window.jQuery;
 
-$(document).ready(function() {
-    var totalHours = 0.0;
-    $('.duration.placeholderField-input').each(function(i) {
-        if (this.value !== "" || this.value !== " " || this.value !== "0:00")
-            return;
-        var [hours, minutes] = this.value.split(":");
-        hours = parseInt(hours);
-        minutes = parseInt(minutes);
-        totalHours += hours + minutes / 60;
+(function() {
+    'use strict';
+    var $ = window.jQuery;
+    var totalHours = 0;
+
+    $(".u-textSmall.u-paddingTopSmallest.u-paddingBottomSmallest.js-weeklyTimeSheetTotalTimeNumber").each(function(e) {
+        var text = $(this).text();
+        console.log(text);
+        if (text !== "0:00") {
+            var [hours, minutes] = text.split(":");
+            hours = parseInt(hours);
+            minutes = parseInt(minutes);
+            totalHours += hours + minutes / 60;
+        }
     });
-    $(".headingFive.u-marginNone.u-colorGreyBlueDark")[0].innerText = "Total: " + convertToTime(totalHours);
-});
 
-function convertToTime(number) {
-    var sign = (number >= 0) ? 1 : -1;
+    $(".card-headerTitle").each(function() {
+        $(this).text($(this).text() + " | Remaining: " + convertToTime(40 - totalHours));
+    });
 
-    number *= sign;
 
-    var hour = Math.floor(number);
-    var decpart = number - hour;
+    function convertToTime(number) {
+        var sign = (number >= 0) ? 1 : -1;
 
-    var min = 1 / 60;
-    // Round to nearest minute
-    decpart = min * Math.round(decpart / min);
+        number *= sign;
 
-    var minute = Math.floor(decpart * 60) + '';
+        var hour = Math.floor(number);
+        var decpart = number - hour;
 
-    // Add padding if need
-    if (minute.length < 2) {
-        minute = '0' + minute;
+        var min = 1 / 60;
+        // Round to nearest minute
+        decpart = min * Math.round(decpart / min);
+
+        var minute = Math.floor(decpart * 60) + '';
+
+        // Add padding if need
+        if (minute.length < 2) {
+            minute = '0' + minute;
+        }
+
+        // Add Sign in final result
+        sign = (sign == 1) ? '' : '-';
+
+        // Concate hours and minutes
+        return sign + hour + ':' + minute;
     }
 
-    // Add Sign in final result
-    sign = (sign == 1) ? '' : '-';
+})();
 
-    // Concate hours and minutes
-    return sign + hour + ':' + minute;
-}
